@@ -16,10 +16,10 @@ function extractSpreadsheetId(url) {
 }
 
 async function fetchCSVFallback(spreadsheetId) {
-    const csvUrl = "https://docs.google.com/spreadsheets/d//export?format=csv";
+    const csvUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv`;
     const res = await fetch(csvUrl);
     if (!res.ok) {
-        throw new Error("Failed to fetch CSV export. Status: ");
+        throw new Error(`Failed to fetch CSV export. Status: ${res.status}`);
     }
     return await res.text();
 }
@@ -32,7 +32,7 @@ function parseCSV(rawCSV) {
             let current = "";
             for (let i = 0; i < row.length; i++) {
                 const ch = row[i];
-                if (ch === '\"') {
+                if (ch === '"') {
                     inQuote = !inQuote;
                 } else if (ch === "," && !inQuote) {
                     parts.push(current);
@@ -47,7 +47,7 @@ function parseCSV(rawCSV) {
 }
 
 async function fetchViaAPI(spreadsheetId, apiKey) {
-    const apiUrl = "https://sheets.googleapis.com/v4/spreadsheets//values/A:Z?key=";
+    const apiUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/A:Z?key=${apiKey}`;
     const res = await fetch(apiUrl);
     const data = await res.json();
     if (data.error) {
@@ -60,10 +60,10 @@ async function getSpreadsheetData(sheetUrl, apiKey) {
     const spreadsheetId = extractSpreadsheetId(sheetUrl);
     if (apiKey) {
         try {
-            console.log("Attempting to fetch sheet data via API...");
+            console.log(`Attempting to fetch sheet data via API...`);
             return await fetchViaAPI(spreadsheetId, apiKey);
         } catch (err) {
-            console.warn("API fetch failed: . Falling back to CSV export.");
+            console.warn(`API fetch failed: ${err.message}. Falling back to CSV export.`);
         }
     } else {
         console.log("No Google API Key configured. Using public CSV export fallback.");
@@ -103,7 +103,7 @@ function randomDelay(minMs, maxMs) {
 }
 
 // Anti-bot stealth scripts
-const stealthScripts = "
+const stealthScripts = `
     // Overwrite the navigator.webdriver property
     Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
     
@@ -122,7 +122,7 @@ const stealthScripts = "
             Promise.resolve({ state: Notification.permission }) :
             originalQuery(parameters)
     );
-";
+`;
 
 async function humanType(page, selector, text) {
     const el = page.locator(selector).first();
@@ -145,7 +145,7 @@ async function safeGoto(page, url, timeout = 45000) {
         await page.goto(url, { waitUntil: "domcontentloaded", timeout });
     } catch (e) {
         if (e.message && e.message.includes("Timeout")) {
-            console.warn("Navigation timeout for  — continuing anyway.");
+            console.warn(`Navigation timeout for ${url} — continuing anyway.`);
         } else {
             throw e;
         }
@@ -157,7 +157,7 @@ async function handlePinIfRequired(page, pinCode) {
         let isPinScreen = false;
         for (let attempt = 0; attempt < 30; attempt++) {
             const currentUrl = page.url();
-            const pinContainer = await page.[data-testid="pin-code-input-container"];
+            const pinContainer = await page.$('[data-testid="pin-code-input-container"]');
             if (currentUrl.includes("/i/chat/pin") || pinContainer) {
                 isPinScreen = true;
                 break;
@@ -176,7 +176,7 @@ async function handlePinIfRequired(page, pinCode) {
             await randomDelay(800, 1500);
 
             const digits = pinCode.toString().split("");
-            const inputs = await page.('[data-testid="pin-code-input-container"] input[type="text"]');
+            const inputs = await page.$$('[data-testid="pin-code-input-container"] input[type="text"]');
             for (let i = 0; i < inputs.length && i < digits.length; i++) {
                 await inputs[i].click();
                 await inputs[i].type(digits[i], { delay: 100 });
@@ -244,7 +244,7 @@ async function moveMouseSmoothly(page, targetX, targetY) {
 }
 
 async function sendDirectMessage(page, username, message, pinCode) {
-    await safeGoto(page, "https://x.com/");
+    await safeGoto(page, `https://x.com/${username}`);
     
     // Add jitter simulating profile reading
     await randomDelay(2000, 4500);
@@ -265,7 +265,7 @@ async function sendDirectMessage(page, username, message, pinCode) {
     }
     await msgBtn.click();
     
-    // Smart wait: Wait for either the composer or the PIN screen, up to 7 seconds
+    // Smart wait: Wait for the PIN screen, up to 7 seconds
     try {
         await Promise.race([
             page.waitForSelector('[data-testid="pin-code-input-container"]', { state: "visible", timeout: 7000 }),
@@ -277,7 +277,7 @@ async function sendDirectMessage(page, username, message, pinCode) {
 
     let isPinScreen = false;
     const currentUrl = page.url();
-    const pinContainer = await page.[data-testid="pin-code-input-container"];
+    const pinContainer = await page.$('[data-testid="pin-code-input-container"]');
     if (currentUrl.includes("/i/chat/pin") || pinContainer) {
         isPinScreen = true;
     }
@@ -289,7 +289,7 @@ async function sendDirectMessage(page, username, message, pinCode) {
             await randomDelay(800, 1500);
 
             const digits = pinCode.toString().split("");
-            const inputs = await page.('[data-testid="pin-code-input-container"] input[type="text"]');
+            const inputs = await page.$$('[data-testid="pin-code-input-container"] input[type="text"]');
             for (let i = 0; i < inputs.length && i < digits.length; i++) {
                 await inputs[i].click();
                 await inputs[i].type(digits[i], { delay: 100 });
@@ -366,7 +366,7 @@ Actor.main(async () => {
     }
 
     // Fetch and Parse Sheet Data
-    console.log("Fetching data from sheet: ");
+    console.log(`Fetching data from sheet: ${sheetUrl}`);
     const rows = await getSpreadsheetData(sheetUrl, googleApiKey);
     const allPairs = parsePairs(rows);
     
@@ -375,7 +375,7 @@ Actor.main(async () => {
 
     // Deduplication Logic using Apify KeyValueStore
     const kvStore = await Actor.openKeyValueStore();
-    const historyKey = "MSG_HISTORY_";
+    const historyKey = `MSG_HISTORY_${sheetId}`;
     let messageHistory = await kvStore.getValue(historyKey) || [];
     const sentUsers = new Set(messageHistory.map(username => username.toLowerCase()));
 
@@ -387,7 +387,7 @@ Actor.main(async () => {
         return;
     }
     
-    console.log("Found  total pending targets. Will process  in this run.");
+    console.log(`Found ${pendingTargets.length} total pending targets. Will process ${targets.length} in this run.`);
 
     // Browser Initialization (Brave Shields via Persistent Context)
     const bravePath = "/usr/bin/brave-browser"; 
@@ -438,7 +438,7 @@ Actor.main(async () => {
         // Process Targets
         for (let i = 0; i < targets.length; i++) {
             const { username, message } = targets[i];
-            console.log("[/] Attempting to message @...");
+            console.log(`[${i+1}/${targets.length}] Attempting to message @${username}...`);
             
             try {
                 await sendDirectMessage(page, username, message, pinCode);
@@ -454,9 +454,9 @@ Actor.main(async () => {
                     timestamp: new Date().toISOString()
                 });
 
-                console.log("? Successfully sent to @");
+                console.log(`? Successfully sent to @${username}`);
             } catch (err) {
-                console.error("? Failed to message @: ");
+                console.error(`? Failed to message @${username}: ${err.message}`);
                 await Actor.pushData({
                     username,
                     message,
