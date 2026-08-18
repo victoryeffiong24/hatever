@@ -1,0 +1,14 @@
+{
+    "$schema": "https://apify.com/schemas/v1/actor.ide.json",
+    "actorSpecification": 1,
+    "name": "x-auto-messenger",
+    "title": "X / Twitter Auto Messenger",
+    "description": "Automatically sends personalized DMs on X/Twitter from a Google Sheet.",
+    "version": "1.0.0",
+    "meta": {
+        "templateId": "js-start",
+        "generatedBy": "Antigravity with Gemini 3.1 Pro"
+    },
+    "inputSchema": "./input_schema.json",
+    "dockerfile": "../Dockerfile"
+}

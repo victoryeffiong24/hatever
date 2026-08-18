@@ -1,0 +1,62 @@
+{
+    "title": "X Auto Messenger Input",
+    "type": "object",
+    "schemaVersion": 1,
+    "properties": {
+        "sheetUrl": {
+            "title": "Google Sheet URL",
+            "type": "string",
+            "description": "URL of the Google Sheet containing usernames (Column A) and messages (Column B).",
+            "editor": "textfield"
+        },
+        "cookieString": {
+            "title": "X.com Cookie String",
+            "type": "string",
+            "description": "Raw cookie string for authentication (optional if auth_token/ct0 are provided).",
+            "editor": "textarea",
+            "isSecret": true
+        },
+        "auth_token": {
+            "title": "auth_token",
+            "type": "string",
+            "description": "Value of the auth_token cookie.",
+            "editor": "textfield",
+            "isSecret": true
+        },
+        "ct0": {
+            "title": "ct0",
+            "type": "string",
+            "description": "Value of the ct0 cookie.",
+            "editor": "textfield",
+            "isSecret": true
+        },
+        "googleApiKey": {
+            "title": "Google API Key",
+            "type": "string",
+            "description": "API Key for accessing private Google Sheets (optional).",
+            "editor": "textfield",
+            "isSecret": true
+        },
+        "messagesPerRun": {
+            "title": "Messages Per Run",
+            "type": "integer",
+            "description": "Maximum number of messages to send in a single execution.",
+            "default": 20,
+            "minimum": 1
+        },
+        "delaySeconds": {
+            "title": "Base Delay (Seconds)",
+            "type": "integer",
+            "description": "Base delay between sending messages (will be randomized +/- 5 seconds).",
+            "default": 12,
+            "minimum": 5
+        },
+        "pinCode": {
+            "title": "DM PIN Code",
+            "type": "string",
+            "description": "Optional PIN code if X requires it for DM recovery.",
+            "editor": "textfield"
+        }
+    },
+    "required": ["sheetUrl"]
+}

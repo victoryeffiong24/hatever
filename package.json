@@ -1,0 +1,16 @@
+{
+    "name": "x-auto-messenger",
+    "version": "1.0.0",
+    "type": "module",
+    "description": "Standalone Apify Actor for automatically sending DMs on X/Twitter from a Google Sheet using Brave browser.",
+    "main": "src/main.js",
+    "scripts": {
+        "start": "node src/main.js"
+    },
+    "dependencies": {
+        "apify": "^3.3.3",
+        "crawlee": "^3.12.2",
+        "playwright": "^1.50.1",
+        "node-fetch": "^3.3.2"
+    }
+}
