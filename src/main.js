@@ -145,7 +145,7 @@ async function safeGoto(page, url, timeout = 45000) {
         await page.goto(url, { waitUntil: "domcontentloaded", timeout });
     } catch (e) {
         if (e.message && e.message.includes("Timeout")) {
-            console.warn(`Navigation timeout for ${url} — continuing anyway.`);
+            console.warn(`Navigation timeout for ${url} ï¿½ continuing anyway.`);
         } else {
             throw e;
         }
@@ -168,7 +168,7 @@ async function handlePinIfRequired(page, pinCode) {
         if (isPinScreen) {
             console.log("?? DM PIN Recovery screen detected. Attempting to enter PIN...");
             if (!pinCode) {
-                console.warn("PIN screen detected but no PIN provided — skipping.");
+                console.warn("PIN screen detected but no PIN provided ï¿½ skipping.");
                 return;
             }
             
@@ -256,7 +256,13 @@ async function sendDirectMessage(page, username, message, pinCode) {
         await page.waitForSelector('[data-testid="sendDMFromProfile"]', { timeout: 12000 });
         msgBtn = page.locator('[data-testid="sendDMFromProfile"]').first();
     } catch (e) {
-        throw new Error("Message button not found — account may have DMs disabled or restricted.");
+        try {
+            const kvStore = await Actor.openKeyValueStore();
+            await kvStore.setValue(`ERROR_SCREENSHOT_${username}.png`, await page.screenshot(), { contentType: 'image/png' });
+        } catch (screenshotErr) {
+            console.error("Failed to take error screenshot:", screenshotErr.message);
+        }
+        throw new Error("Message button not found ï¿½ account may have DMs disabled or restricted. (Screenshot saved to Apify Key-Value Store)");
     }
 
     const btnBox = await msgBtn.boundingBox();
@@ -299,7 +305,7 @@ async function sendDirectMessage(page, username, message, pinCode) {
             await page.keyboard.press("Enter");
             await randomDelay(3000, 4500);
         } else {
-            console.warn("PIN screen detected but no PIN provided — skipping.");
+            console.warn("PIN screen detected but no PIN provided ï¿½ skipping.");
         }
     }
 
